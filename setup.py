@@ -8,7 +8,7 @@ setup(
     long_description='',
     author='Vitaliy Nefyodov',
     author_email='vitent@gmail.com',
-    packages=[''],
+    packages=['orbilite'],
     url='https://github.com/lordent/orbilite',
     install_requires=[
         'ujson',
