@@ -16,15 +16,13 @@ class Orbilite:
         connection_url: str,
         failed_queue_name: str = 'failed',
         exchange_name: str = 'tasks',
-        loop=asyncio.get_event_loop(),
     ):
         self.connection_url = connection_url
         self.failed_queue_name = failed_queue_name
         self.exchange_name = exchange_name
-        self.loop = loop
 
     async def create_connection(self):
-        return await connect(self.connection_url, loop=self.loop)
+        return await connect(self.connection_url, loop=asyncio.get_event_loop())
 
     async def send_message_to_queue(self, channel, queue_name, message_data):
         message = Message(
