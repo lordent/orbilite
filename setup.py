@@ -10,7 +10,7 @@ setup(
     author_email='vitent@gmail.com',
     packages=[''],
     url='https://github.com/lordent/orbilite',
-    requires=[
+    install_requires=[
         'ujson',
         'aio_pika',
     ],
