@@ -14,29 +14,41 @@ class Orbilite:
     def __init__(
         self,
         connection_url: str,
+        producer_url: str = None,
+        consumer_url: str = None,
         failed_queue_name: str = 'failed',
         exchange_name: str = 'tasks',
     ):
-        self.connection_url = connection_url
+        self.producer_url = producer_url or connection_url
+        self.consumer_url = consumer_url or connection_url
+
         self.failed_queue_name = failed_queue_name
         self.exchange_name = exchange_name
 
-    async def create_connection(self):
-        return await connect(self.connection_url, loop=asyncio.get_event_loop())
+        self._producer = None
+        self._consumer = None
+
+    @staticmethod
+    async def create_connection(url):
+        return await connect(url, loop=asyncio.get_event_loop())
+
+    async def producer(self):
+        self._producer = self._producer or \
+                         await self.create_connection(self.producer_url)
+        return self._producer
+
+    async def consumer(self):
+        self._consumer = self._consumer or \
+                         await self.create_connection(self.consumer_url)
+        return self._consumer
 
     async def send_message_to_queue(self, channel, queue_name, message_data):
         message = Message(
             ujson.dumps(message_data).encode('utf-8'),
+            content_type='application/json',
             delivery_mode=DeliveryMode.PERSISTENT
         )
-
-        exchange = await channel.declare_exchange(
-            self.exchange_name, auto_delete=True)
-
-        queue = await channel.declare_queue(
-            queue_name, durable=True, auto_delete=True)
-
-        await queue.bind(exchange, queue_name)
+        exchange = await channel.declare_exchange(self.exchange_name, durable=True)
         await exchange.publish(message, routing_key=queue_name)
 
     def task(self, queue_name: str,
@@ -88,22 +100,15 @@ class Orbilite:
                 )
 
     async def consume_queue(self, queue_name: str):
-
         async def on_message(message: IncomingMessage):
             await self.message_process(channel=channel, message=message)
 
-        connection = await self.create_connection()
+        connection = await self.consumer()
 
-        channel = await connection.channel(
-            publisher_confirms=True)
-        exchange = await channel.declare_exchange(
-            self.exchange_name, auto_delete=True)
-        queue = await channel.declare_queue(
-            queue_name, durable=True, auto_delete=True)
-
-        await queue.bind(exchange, queue_name)
+        channel = await connection.channel(publisher_confirms=True)
         await channel.set_qos(prefetch_count=1)
 
+        queue = await channel.declare_queue(queue_name, durable=True)
         await queue.consume(on_message)
 
 
@@ -127,7 +132,7 @@ class AsyncTask:
             'kwargs': kwargs,
         }
 
-        async with await self.app.create_connection() as connection:
+        async with await self.app.producer() as connection:
             channel = await connection.channel(publisher_confirms=True)
             await self.app.send_message_to_queue(
                 channel=channel,
