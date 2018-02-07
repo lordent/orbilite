@@ -3,7 +3,7 @@ from setuptools import setup
 
 setup(
     name='orbilite',
-    version='1.0.0',
+    version='1.0.1',
     description='asyncio task manager',
     long_description='',
     author='Vitaliy Nefyodov',
@@ -14,6 +14,14 @@ setup(
         'ujson',
         'aio_pika',
     ],
+    extras_require={
+        'develop': [
+            'pylama',
+            'pytest',
+            'pytest-asyncio',
+            'tox',
+        ],
+    },
     classifiers=[
         'License :: OSI Approved :: BSD License',
         'Programming Language :: Python :: 3',
