@@ -1,0 +1,13 @@
+language: python
+
+services:
+  - rabbitmq
+
+python:
+  - "3.6"
+
+install:
+  - pip install tox coveralls codecov
+
+script:
+  - tox
