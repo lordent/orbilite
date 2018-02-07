@@ -1,4 +1,5 @@
 language: python
+sudo: required
 
 services:
   - rabbitmq
@@ -7,7 +8,6 @@ python:
   - "3.6"
 
 install:
-  - pip install tox coveralls codecov
+  - pip install tox pylama pytest pytest-asyncio
 
-script:
-  - tox
+script: tox
